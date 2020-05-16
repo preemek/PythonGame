@@ -148,7 +148,7 @@ while running:
         print("Pozycja drabiny x :{}".format(ladder.x))
         print("Pozycja robota y :{}".format(robot.y))
 
-    elif keys[pygame.K_UP] and robot.x + 60 == ladder.x and robot.y + 240 > ladder.y:
+    elif keys[pygame.K_UP] and robot.x + 40 <= ladder.x <= robot.x + 80 and robot.y + 240 > ladder.y:
         robot.y -= robot.velocity
         robot.climbing = True
         robot.standing = False
