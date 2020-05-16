@@ -128,7 +128,7 @@ while running:
     keys = pygame.key.get_pressed()
 
     def is_climbing():
-        if robot.x + 60 == ladder.x and robot.y < 340:
+        if robot.x + 40 <= ladder.x <= robot.x + 80  and robot.y < 340:
             robot.climbing = True
         else:
             robot.climbing = False
