@@ -1,4 +1,5 @@
 import pygame
+from abc import ABC, abstractmethod
 
 #uruchamianie okna
 pygame.init()
@@ -10,25 +11,42 @@ robo_walking = [pygame.image.load("img/Robot/character_robot_walk0.png"),pygame.
                 pygame.image.load("img/Robot/character_robot_walk3.png"),pygame.image.load("img/Robot/character_robot_walk4.png"),pygame.image.load("img/Robot/character_robot_walk5.png"),
                 pygame.image.load("img/Robot/character_robot_walk6.png"),pygame.image.load("img/Robot/character_robot_walk7.png")]
 ladder_img = pygame.image.load("img/Tiles/fenceLow.png")
+ground = pygame.image.load("img/groundIce.png")
+climbing = [pygame.image.load("img/Robot/character_robot_climb0.png"), pygame.image.load("img/Robot/character_robot_climb1.png")]
 
 #gracz
 class Player:
-    def __init__(self, x, y, height, width):
+    def __init__(self, x, y, image):
         self.x = x
         self.y = y
-        self.height = height
-        self.width = width
+        self.image = image
+        self.height = 180
+        self.width = 160
         self.left = False
         self.right = False
         self.standing = True
         self.climbing = False
         self.walk_position = 0
-        self.velocity = 10
+        self.climb_position = 0
+        self.__velocity = 15
         self.hitbox = (self.x + 10, self.y +70 , 160, 180)
+
+    @property
+    def velocity(self):
+        return self.__velocity
+
+    @velocity.setter
+    def velocity(self, velocity):
+        self.__velocity = velocity
 
     def draw(self, screen):
         if self.standing:
             screen.blit(robo_walking[0], (self.x, self.y))
+        elif self.climbing:
+            screen.blit(climbing[self.climb_position], (self.x, self.y))
+            self.climb_position += 1
+            if self.climb_position == 2:
+                self.climb_position =0
         else:
             if self.walk_position < len(robo_walking):
                     screen.blit(robo_walking[self.walk_position], (self.x, self.y))
@@ -41,37 +59,53 @@ class Player:
         pygame.draw.rect(screen, (255, 0, 0), self.hitbox, 1)
 
 
-class Object:
-
-    def __init__(self, x, y, height, width):
+class Object(ABC):
+    def __init__(self, x, y, image):
         self.x = x
         self.y = y
-        self.height = height
-        self.width = width
-        self.hitbox = (self.x + 5, self.y +40 , 70, 70)
+        self.image = image
 
+    @abstractmethod
     def draw(self, screen):
+        pass
 
-        screen.blit(ladder_img, (self.x, self.y))
+class Ladders(Object):
+    def __init__(self,x,y,image):
+        super().__init__(x, y, image)
+        self.hitbox = (self.x + 5, self.y +40 , 70, 70)
+        self.height = 70
+        self.width = 70
+
+    def draw(self,screen):
+        screen.blit(self.image, (self.x, self.y))
         self.hitbox = (self.x, self.y, 70, 70)
         pygame.draw.rect(screen, (255, 0, 0), self.hitbox, 1)
 
-        screen.blit(ladder_img, (self.x, self.y+50))
+        screen.blit(self.image, (self.x, self.y + 50))
         self.hitbox = (self.x, self.y + 50, 70, 70)
         pygame.draw.rect(screen, (255, 0, 0), self.hitbox, 1)
 
-        screen.blit(ladder_img, (self.x, self.y + 100))
+        screen.blit(self.image, (self.x, self.y + 100))
         self.hitbox = (self.x, self.y + 100, 70, 70)
         pygame.draw.rect(screen, (255, 0, 0), self.hitbox, 1)
 
-        screen.blit(ladder_img, (self.x, self.y + 150))
+        screen.blit(self.image, (self.x, self.y + 150))
         self.hitbox = (self.x, self.y + 150, 70, 70)
         pygame.draw.rect(screen, (255, 0, 0), self.hitbox, 1)
+
+class Platform(Object):
+    def __init__(self, x, y, image):
+        super().__init__(x,y,image)
+        self.hitbox = (self.x, self.y, 1300, 10)
+
+    def draw(self,screen):
+        pygame.draw.rect(screen, (0, 0, 0), self.hitbox, 10)
 
 
 
 def update_all():
     screen.blit(bg, (0,0))
+    platform1.draw(screen)
     ladder.draw(screen)
     robot.draw(screen)
     pygame.display.update()
@@ -79,13 +113,12 @@ def update_all():
 
 
 #loop
-
 running = True
 
-robot = Player(600,550,2,2)
-ladder = Object(100,550,2,2)
-
-
+#instances
+robot = Player(600,550,robo_walking[0])
+ladder = Ladders(100, 580, ladder_img)
+platform1 = Platform(0, ladder.y +10, ground)
 
 while running:
     for event in pygame.event.get():
@@ -95,7 +128,7 @@ while running:
     keys = pygame.key.get_pressed()
 
     def is_climbing():
-        if robot.x + 40 == ladder.x and robot.y < 550:
+        if robot.x + 60 == ladder.x and robot.y < 340:
             robot.climbing = True
         else:
             robot.climbing = False
@@ -118,6 +151,7 @@ while running:
     elif keys[pygame.K_UP] and robot.x + 60 == ladder.x and robot.y + 240 > ladder.y:
         robot.y -= robot.velocity
         robot.climbing = True
+        robot.standing = False
         print("Pozycja robota y :{}".format(robot.y))
         print("Pozycja drabiny y :{}".format(ladder.y))
     else:
