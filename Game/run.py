@@ -130,6 +130,7 @@ def update_all():
         bullets[0].draw(screen)
     else:
         bullets[0].x = robot.x
+        bullets[0].y = robot.y + 130
         robot.shotting = False
     robot.draw(screen)
     pygame.display.update()
@@ -191,6 +192,8 @@ while running:
         print("Pozycja drabiny y :{}".format(ladder.y))
     elif keys[pygame.K_SPACE] and robot.climbing is False:
         robot.shotting = True
+        print("{}".format(bullets[0].x))
+        print("{}".format(bullets[0].y))
         # robot.shotting = True
         print("spacepressed")
     else:
