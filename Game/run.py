@@ -123,6 +123,7 @@ class Projectile(Object):
     def draw(self, screen):
         # if robot.right:
         screen.blit(self.image, (self.x + 50, self.y))
+        time.sleep(0.2)
                 # self.hitbox = (self.x, self.y, 70, 70)
                 # pygame.draw.rect(screen, (255, 0, 0), self.hitbox, 1)
         # if robot.left:
@@ -137,7 +138,6 @@ def update_all():
         if bullets[m].on_way is True and bullets[m].x < 1300:
             bullets[m].x += bullets[m].bull_velocity
             bullets[m].draw(screen)
-            time.sleep(0.1)
         else:
             bullets[m].on_way = False
             bullets[m].x = robot.x
