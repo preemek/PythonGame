@@ -21,7 +21,7 @@ pygame.mixer.music.play()
 
 
 
-#gracz
+#graczz
 class Player:
     def __init__(self, x, y, image):
         self.x = x
