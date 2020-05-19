@@ -29,7 +29,8 @@ bg_x = 0
 bg_y = 0
 bg_x2 = 1300
 bg_y2 = 0
-start_scroll_when = 950
+start_scroll_when_right = 950
+start_scroll_when_left = 350
 
 #graczz
 class Player:
@@ -239,7 +240,7 @@ while running:
 
     if keys[pygame.K_RIGHT] and bg_x2 >= -5 and robot.climbing is False and robot.x + 170 < 1300:
         if robot.climbing is False:
-            if robot.x > start_scroll_when and bg_x2 > 0:
+            if robot.x > start_scroll_when_right and bg_x2 > 0:
                 bg_x -= robot.velocity
                 bg_x2 -= robot.velocity
             else:
@@ -254,16 +255,29 @@ while running:
         print("Pozycja robota x :{}".format(robot.x))
         print("Pozycja drabiny x :{}".format(ladder.x))
 
-    elif keys[pygame.K_LEFT] and robot.x - 10 > 0 and robot.climbing is False:
+    elif keys[pygame.K_LEFT] and bg_x <= 0 and robot.x - 10 > 0 and robot.climbing is False:
         if robot.climbing is False:
-            robot.x -= robot.velocity
-            robot.standing = False
-            if keys[pygame.K_SPACE]:
-                coming_bullets()
+            if robot.x < start_scroll_when_left and bg_x < 0:
+                bg_x += robot.velocity
+                bg_x2 += robot.velocity
+            else:
+                robot.x -= robot.velocity
+                robot.standing = False
+                robot.right = True
+                if keys[pygame.K_SPACE]:
+                    coming_bullets()
+        robot.right = True
+        robot.left = False
+        # if robot.climbing is False:
+        #     robot.x -= robot.velocity
+        #     robot.standing = False
+        #     if keys[pygame.K_SPACE]:
+        #         coming_bullets()
         robot.right = False
         robot.left = True
+        print("Scroll left{}".format(start_scroll_when_left))
         print("Pozycja robota x :{}".format(robot.x))
-        print("Pozycja drabiny x :{}".format(ladder.x))
+        print("Pozycja BG x :{}".format(bg_x))
         print("Pozycja robota y :{}".format(robot.y))
     elif keys[pygame.K_DOWN] and robot.x + 40 <= ladder.x <= robot.x + 80 and ladder.part4_reach + 70 > robot.y + 250 >= ladder.part1_reach - 10:
         robot.y += robot.velocity
