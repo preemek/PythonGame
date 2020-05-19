@@ -27,18 +27,19 @@ class Player:
         self.x = x
         self.y = y
         self.image = image
-        self.height = 180
-        self.width = 160
+        self.height = self.image.get_height()
+        self.width = self.image.get_width()
         self.left = False
         self.right = False
         self.standing = True
         self.climbing = False
         self.shotting = False
+        self.on_ladder = False #stoi na drabinie bez ruchu
         self.walk_position = 0
         self.climb_position = 0
         self.amo = 10
         self.__velocity = 15
-        self.hitbox = (self.x + 10, self.y +70 , 160, 180)
+        self.hitbox = (self.x + 10, self.y + 70 , self.width, self.height)
 
     @property
     def velocity(self):
@@ -51,13 +52,15 @@ class Player:
     def draw(self, screen):
         if self.standing and self.shotting is False:
             screen.blit(robo_walking[0], (self.x, self.y))
-        elif self.climbing:
+        elif self.climbing and self.on_ladder is False:
             screen.blit(climbing[self.climb_position], (self.x, self.y))
             self.climb_position += 1
             if self.climb_position == 2:
                 self.climb_position =0
         elif self.shotting or self.standing:
             screen.blit(attack_img, (self.x, self.y))
+        elif self.climbing and self.on_ladder is True:
+            screen.blit(climbing[0], (self.x, self.y))
         else:
             if self.walk_position < len(robo_walking):
                 screen.blit(robo_walking[self.walk_position], (self.x, self.y))
@@ -76,6 +79,8 @@ class Object(ABC):
         self.x = x
         self.y = y
         self.image = image
+        self.height = self.image.get_height()
+        self.width = self.image.get_width()
 
     @abstractmethod
     def draw(self, screen):
@@ -84,25 +89,27 @@ class Object(ABC):
 class Ladders(Object):
     def __init__(self,x,y,image):
         super().__init__(x, y, image)
-        self.hitbox = (self.x + 5, self.y +40 , 70, 70)
-        self.height = 70
-        self.width = 70
+        self.part1_reach = self.y
+        self.part2_reach = self.y + 50
+        self.part3_reach = self.y + 100
+        self.part4_reach = self.y + 150
+        self.hitbox = (self.x, self.y, self.width, self.height)
 
     def draw(self,screen):
-        screen.blit(self.image, (self.x, self.y))
-        self.hitbox = (self.x, self.y, 70, 70)
+        screen.blit(self.image, (self.x, self.part1_reach))
+        self.hitbox = (self.x, self.y, self.width, self.height)
         pygame.draw.rect(screen, (255, 0, 0), self.hitbox, 1)
 
-        screen.blit(self.image, (self.x, self.y + 50))
-        self.hitbox = (self.x, self.y + 50, 70, 70)
+        screen.blit(self.image, (self.x, self.part2_reach))
+        self.hitbox = (self.x, self.y + 50, self.width, self.height)
         pygame.draw.rect(screen, (255, 0, 0), self.hitbox, 1)
 
-        screen.blit(self.image, (self.x, self.y + 100))
-        self.hitbox = (self.x, self.y + 100, 70, 70)
+        screen.blit(self.image, (self.x, self.part3_reach))
+        self.hitbox = (self.x, self.y + 100, self.width, self.height)
         pygame.draw.rect(screen, (255, 0, 0), self.hitbox, 1)
 
-        screen.blit(self.image, (self.x, self.y + 150))
-        self.hitbox = (self.x, self.y + 150, 70, 70)
+        screen.blit(self.image, (self.x, self.part4_reach))
+        self.hitbox = (self.x, self.y + 150, self.width, self.height)
         pygame.draw.rect(screen, (255, 0, 0), self.hitbox, 1)
 
 class Platform(Object):
@@ -170,10 +177,11 @@ def coming_bullets():
             break
 
 def is_climbing():
-    if robot.x + 40 <= ladder.x <= robot.x + 80  and robot.y < 340:
+    if robot.x + 40 <= ladder.x <= robot.x + 80 and ladder.part4_reach + 70 > robot.y + 250 > ladder.part1_reach:
         robot.climbing = True
     else:
         robot.climbing = False
+        robot.on_ladder = False
 
 def is_shooting():
     if keys[pygame.K_SPACE] and robot.climbing is False:
@@ -188,9 +196,9 @@ def is_shooting():
 running = True
 
 #instances
-robot = Player(600,550,robo_walking[0])
-ladder = Ladders(100, 580, ladder_img)
-platform1 = Platform(0, ladder.y +10, ground)
+robot = Player(200,550,robo_walking[0])
+platform1 = Platform(0, 580, ground)
+ladder = Ladders(100, platform1.y, ladder_img)
 bullets = list()
 
 for i in range(robot.amo):
@@ -210,37 +218,51 @@ while running:
     is_shooting()
 
     if keys[pygame.K_RIGHT] and robot.x + 170 < 1300 and robot.climbing is False:
-        robot.x += robot.velocity
-        robot.standing = False
-        robot.right = True
-        if keys[pygame.K_SPACE]:
-            coming_bullets()
+        if robot.climbing is False:
+            robot.x += robot.velocity
+            robot.standing = False
+            robot.right = True
+            if keys[pygame.K_SPACE]:
+                coming_bullets()
         # robot.shotting = True
-        # print("Pozycja robota x :{}".format(robot.x))
-        # print("Pozycja drabiny x :{}".format(ladder.x))
+        print("Pozycja robota x :{}".format(robot.x))
+        print("Pozycja drabiny x :{}".format(ladder.x))
 
     elif keys[pygame.K_LEFT] and robot.x - 10 > 0 and robot.climbing is False:
-        robot.x -= robot.velocity
+        if robot.climbing is False:
+            robot.x -= robot.velocity
+            robot.standing = False
+            if keys[pygame.K_SPACE]:
+                coming_bullets()
+        print("Pozycja robota x :{}".format(robot.x))
+        print("Pozycja drabiny x :{}".format(ladder.x))
+        print("Pozycja robota y :{}".format(robot.y))
+    elif keys[pygame.K_DOWN] and robot.x + 40 <= ladder.x <= robot.x + 80 and ladder.part4_reach + 70 > robot.y + 250 >= ladder.part1_reach - 10:
+        robot.y += robot.velocity
+        robot.climbing = True
         robot.standing = False
-        if keys[pygame.K_SPACE]:
-            coming_bullets()
-        # print("Pozycja robota x :{}".format(robot.x))
-        # print("Pozycja drabiny x :{}".format(ladder.x))
-        # print("Pozycja robota y :{}".format(robot.y))
+        robot.on_ladder = False
+        print("Pozycja robota y :{}".format(robot.y))
+        print("Pozycja drabiny y :{}".format(ladder.y))
 
-    elif keys[pygame.K_UP] and robot.x + 40 <= ladder.x <= robot.x + 80 and robot.y + 240 > ladder.y:
+    elif keys[pygame.K_UP] and robot.x + 40 <= ladder.x <= robot.x + 80 and ladder.part4_reach + 70 >= robot.y + 250 > ladder.part1_reach:
         robot.y -= robot.velocity
         robot.climbing = True
         robot.standing = False
-        # print("Pozycja robota y :{}".format(robot.y))
-        # print("Pozycja drabiny y :{}".format(ladder.y))
+        robot.on_ladder = False
+        print("Pozycja robota y :{}".format(robot.y))
+        print("Pozycja drabiny y :{}".format(ladder.y))
 
     elif keys[pygame.K_SPACE] and robot.climbing is False:
         # robot.shotting = True
         coming_bullets()
     else:
-        robot.standing = True
-        robot.right = False
+        if robot.climbing is True:
+            robot.on_ladder = True
+        else:
+            robot.standing = True
+
+
 
 
     update_all()
